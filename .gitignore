@@ -29,3 +29,6 @@ missing
 stamp-h1
 sqlsmith-*.tar.gz
 doxygen_sqlite3.db
+
+docs/
+.vscode

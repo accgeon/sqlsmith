@@ -1,6 +1,15 @@
 AC_INIT(SQLsmith, 1.4, seltenreich@gmx.de, sqlsmith, https://github.com/anse1/sqlsmith/)
 AC_LANG(C++)
 
+AC_SUBST(CC, [clang])
+AC_SUBST(CXX, [clang++])
+
+AX_CXX_COMPILE_STDCXX(11, ext)
+AX_CXX_COMPILE_STDCXX(17, ext)
+
+# AC_SUBST(CFLAGS, "-g -O0")
+# AC_SUBST(CXXFLAGS, "-g -O0")
+
 AM_INIT_AUTOMAKE(-Wall -Werror foreign)
 AC_PROG_CXX
 

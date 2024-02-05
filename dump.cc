@@ -51,14 +51,41 @@ graphml_dumper::~graphml_dumper()
   o << "</graph></graphml>" << endl;
 }
 
+
+std::string graph_dumper::id(struct prod* p)
+{
+  ostringstream os;
+  os << this->type(p) << "_" << p;
+  return os.str();
+}
+
+void graph_dumper::print(struct prod* p)
+{
+    // node
+    _os << this->id(p) << " [label=\"{" << this->type(p)
+        << "|" << "<scope>scope: " << p->scope
+        << "|" << "retries: " << p->retries
+        << "}\"]" << endl;
+    // scope node
+    _os << "\"" << p->scope << "\" [label=\"scope:\\n" << p->scope << "\" shape=note]" << endl;
+    // edge to scope node: composition
+    _os << this->id(p) << ":scope" << " -> \"" << p->scope << "\" [arrowtail=odiamond, dir=back]" << endl;
+    // edge to parent node
+    if (p->pprod) {
+        _os << this->id(p) << " -> " << this->id(p->pprod) << endl;
+    }
+}
+
+
 void ast_logger::generated(prod &query)
 {
-  string filename("");
-  filename += "sqlsmith-";
-  filename += to_string(queries);
-  filename += ".xml";
-  ofstream os(filename);
-  graphml_dumper visitor(os);
-  query.accept(&visitor);
-  queries++;
+    ostringstream ss;
+    ss << "ast-" << put_time(localtime(&now), "%Y%m%d%H%M%S") << "-" << queries << ".dot" << flush;
+
+    ofstream os(ss.str());
+    graph_dumper visitor(os);
+    visitor.head();
+    query.accept(&visitor);
+    visitor.tail();
+    queries++;
 }

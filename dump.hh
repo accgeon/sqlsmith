@@ -1,14 +1,16 @@
 /// @file
 /// @brief Dump syntax trees as GraphML
-#ifndef DUMP_HH
-#define DUMP_HH
+#pragma once
 
+#include <chrono>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <string>
 
 #include "prod.hh"
 #include "log.hh"
+#include "util.hh"
 
 struct graphml_dumper : prod_visitor {
   std::ostream &o;
@@ -19,9 +21,32 @@ struct graphml_dumper : prod_visitor {
   virtual ~graphml_dumper();
 };
 
-struct ast_logger : logger {
-  int queries = 0;
-  virtual void generated(prod &query);
+class graph_dumper : public prod_visitor {
+public:
+    graph_dumper(std::ostream &out) : _os(out) {}
+    virtual ~graph_dumper() {}
+
+    virtual std::string id(struct prod* p);
+    virtual std::string type(struct prod* p) { return pretty_type(p); }
+
+    virtual void visit(struct prod* p) { this->print(p); }
+
+    virtual void head() {
+        _os << "digraph ast {" << std::endl;
+        _os << "  rankdir=\"BT\"" << std::endl;
+        _os << "  node [fontname=\"Monaco\",fontsize=10,shape=record]" << std::endl;
+    }
+    virtual void print(struct prod* p);
+    virtual void tail() { _os << "}" << std::endl;}
+
+protected:
+    std::ostream &_os;
 };
 
-#endif
+struct ast_logger : logger {
+  std::time_t now;
+  int queries = 0;
+
+  ast_logger() : now(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())) {}
+  virtual void generated(prod &query);
+};

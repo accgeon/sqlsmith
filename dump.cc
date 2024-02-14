@@ -67,7 +67,10 @@ void graph_dumper::print(struct prod* p)
         << "|" << "retries: " << p->retries
         << "}\"]" << endl;
     // scope node
-    _os << "\"" << p->scope << "\" [label=\"scope:\\n" << p->scope << "\" shape=note]" << endl;
+    if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
+        visited_scopes.insert(p->scope); // insert it
+        _os << "\"" << p->scope << "\" [label=\"scope:\\n" << p->scope << "\" shape=note]" << endl; // scope node
+    }
     // edge to scope node: composition
     _os << this->id(p) << ":scope" << " -> \"" << p->scope << "\" [arrowtail=odiamond, dir=back]" << endl;
     // edge to parent node

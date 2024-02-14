@@ -6,9 +6,11 @@
 #include <ctime>
 #include <iostream>
 #include <fstream>
+#include <set>
 #include <string>
 
 #include "prod.hh"
+#include "relmodel.hh"
 #include "log.hh"
 #include "util.hh"
 
@@ -20,6 +22,14 @@ struct graphml_dumper : prod_visitor {
   std::string type(struct prod *p);
   virtual ~graphml_dumper();
 };
+
+// template<typename K>
+// class ScopeLess {
+// public:
+//   bool operator()(const K* lhs, const K* rhs) {
+//     return lhs < rhs; // the address of lhs is less than that of rhs
+//   }
+// };
 
 class graph_dumper : public prod_visitor {
 public:
@@ -34,13 +44,14 @@ public:
     virtual void head() {
         _os << "digraph ast {" << std::endl;
         _os << "  rankdir=\"BT\"" << std::endl;
-        _os << "  node [fontname=\"Monaco\",fontsize=10,shape=record]" << std::endl;
+        _os << "  node [fontname=\"Monaco\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
     }
     virtual void print(struct prod* p);
     virtual void tail() { _os << "}" << std::endl;}
 
 protected:
     std::ostream &_os;
+    std::set<scope*> visited_scopes;
 };
 
 struct ast_logger : logger {

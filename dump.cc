@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <typeinfo>
 
 #include "dump.hh"
 #include "util.hh"
@@ -62,10 +63,24 @@ std::string graph_dumper::id(struct prod* p)
 void graph_dumper::print(struct prod* p)
 {
     // node
+    string prodClass = this->type(p);
+    string nodeColor;
+    if (prodClass == "query_spec") {
+        nodeColor = "goldenrod1";
+    }
+    else if (prodClass == "from_clause") {
+        nodeColor = "/purples9/3";
+    }
+    else if (prodClass == "select_list") {
+        nodeColor = "/orrd9/3";
+    }
+    else if (prodClass == "bool_expr") {
+        nodeColor = "/blgr9/3";
+    }
     _os << this->id(p) << " [label=\"{" << this->type(p)
         << "|" << "<scope>scope: " << p->scope
         << "|" << "retries: " << p->retries
-        << "}\"]" << endl;
+        << "}\"" << (nodeColor.empty() ? "" : " fillcolor=\""+nodeColor+"\"") << "]" << endl;
     // scope node
     if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
         visited_scopes.insert(p->scope); // insert it
@@ -75,7 +90,7 @@ void graph_dumper::print(struct prod* p)
     _os << this->id(p) << ":scope" << " -> \"" << p->scope << "\" [arrowtail=odiamond, dir=back]" << endl;
     // edge to parent node
     if (p->pprod) {
-        _os << this->id(p) << " -> " << this->id(p->pprod) << endl;
+        _os << this->id(p->pprod) << " -> " << this->id(p) << endl;
     }
 }
 

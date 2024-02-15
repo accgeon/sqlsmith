@@ -43,8 +43,12 @@ public:
 
     virtual void head() {
         _os << "digraph ast {" << std::endl;
-        _os << "  rankdir=\"BT\"" << std::endl;
-        _os << "  node [fontname=\"Monaco\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
+        _os << "  label=\"SQLsmith AST\"" << endl;
+        _os << "  labelloc=\"t\"" << std::endl;
+        _os << "  fontname=\"Noto Sans Mono\" fontsize=16" << std::endl;
+        _os << "  colorscheme=\"ylorrd9\"" << std::endl;
+        _os << "  node [fontname=\"Menlo\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
+        _os << "  edge [color=\"/blues9/8\"]" << std::endl;
     }
     virtual void print(struct prod* p);
     virtual void tail() { _os << "}" << std::endl;}

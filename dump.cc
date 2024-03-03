@@ -1,9 +1,13 @@
 #include <string>
 #include <sstream>
+#include <format>
 #include <typeinfo>
 
+#pragma region custom headers
+#include "config.h"
 #include "dump.hh"
 #include "util.hh"
+#pragma endregion
 
 using namespace std;
 
@@ -60,37 +64,47 @@ std::string graph_dumper::id(struct prod* p)
   return os.str();
 }
 
+void graph_dumper::head() {
+    _os << "digraph ast {" << std::endl;
+    _os << format("  label=\"{} AST\"", PACKAGE_NAME) << endl;
+    _os << "  labelloc=\"t\"" << std::endl;
+    _os << "  fontname=\"Noto Sans Mono\" fontsize=16" << std::endl;
+    _os << "  colorscheme=\"ylorrd9\"" << std::endl;
+    _os << "  node [fontname=\"Menlo\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
+    _os << "  edge [color=\"/blues9/8\"]" << std::endl;
+}
+
 void graph_dumper::print(struct prod* p)
 {
     // node
-    string prodClass = this->type(p);
+    string prodClassName = this->type(p);
     string nodeColor;
-    if (prodClass == "query_spec") {
+    if (prodClassName == "query_spec") {
         nodeColor = "goldenrod1";
     }
-    else if (prodClass == "from_clause") {
+    else if (prodClassName == "from_clause") {
         nodeColor = "/purples9/3";
     }
-    else if (prodClass == "select_list") {
+    else if (prodClassName == "select_list") {
         nodeColor = "/orrd9/3";
     }
-    else if (prodClass == "bool_expr") {
+    else if (prodClassName == "bool_expr") { // p is subclass of bool_expr
         nodeColor = "/blgr9/3";
     }
-    _os << this->id(p) << " [label=\"{" << this->type(p)
-        << "|" << "<scope>scope: " << p->scope
-        << "|" << "retries: " << p->retries
-        << "}\"" << (nodeColor.empty() ? "" : " fillcolor=\""+nodeColor+"\"") << "]" << endl;
+    _os << format(
+        "{} [label='{{{}|<scope>scope: {:x}|retries: {}}}'{}]",
+        this->id(p), this->type(p), (uintptr_t)p->scope, p->retries,
+        (nodeColor.empty() ? "" : " fillcolor='"+nodeColor+"'")) << endl;
     // scope node
     if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
         visited_scopes.insert(p->scope); // insert it
-        _os << "\"" << p->scope << "\" [label=\"scope:\\n" << p->scope << "\" shape=note]" << endl; // scope node
+        _os << format("'{:x}' [label='scope:\\n'{:x}' shape=note]", (uintptr_t)p->scope, (uintptr_t)p->scope) << endl; // scope node
     }
     // edge to scope node: composition
-    _os << this->id(p) << ":scope" << " -> \"" << p->scope << "\" [arrowtail=odiamond, dir=back]" << endl;
+    _os << format("'{}':scope -> '{:x}' [arrowtail=odiamond, dir=back]", this->id(p), (uintptr_t)p->scope) << endl;
     // edge to parent node
     if (p->pprod) {
-        _os << this->id(p->pprod) << " -> " << this->id(p) << endl;
+        _os << format("'{}' -> '{}'", this->id(p->pprod), this->id(p)) << endl;
     }
 }
 

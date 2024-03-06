@@ -1,6 +1,7 @@
-#include <string>
-#include <sstream>
 #include <format>
+#include <iomanip>
+#include <sstream>
+#include <string>
 #include <typeinfo>
 
 #pragma region custom headers
@@ -60,7 +61,7 @@ graphml_dumper::~graphml_dumper()
 std::string graph_dumper::id(struct prod* p)
 {
   ostringstream os;
-  os << this->type(p) << "_" << p;
+  os << this->type(p) << "_" << internal << setw(16+2) << setfill('0') << p;
   return os.str();
 }
 
@@ -92,19 +93,19 @@ void graph_dumper::print(struct prod* p)
         nodeColor = "/blgr9/3";
     }
     _os << format(
-        "{} [label='{{{}|<scope>scope: {:x}|retries: {}}}'{}]",
+        "\"{}\" [label=\"{{{}|<scope>scope: {:#018x}|retries: {}}}\" {}]",
         this->id(p), this->type(p), (uintptr_t)p->scope, p->retries,
-        (nodeColor.empty() ? "" : " fillcolor='"+nodeColor+"'")) << endl;
+        (nodeColor.empty() ? "" : "fillcolor=\""+nodeColor+"\"")) << endl;
     // scope node
     if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
         visited_scopes.insert(p->scope); // insert it
-        _os << format("'{:x}' [label='scope:\\n'{:x}' shape=note]", (uintptr_t)p->scope, (uintptr_t)p->scope) << endl; // scope node
+        _os << format("\"{:#018x}\" [label=\"scope:\\n{:#018x}\" shape=note]", (uintptr_t)p->scope, (uintptr_t)p->scope) << endl; // scope node
     }
     // edge to scope node: composition
-    _os << format("'{}':scope -> '{:x}' [arrowtail=odiamond, dir=back]", this->id(p), (uintptr_t)p->scope) << endl;
+    _os << format("\"{}\":scope -> \"{:#018x}\" [arrowtail=odiamond, dir=back]", this->id(p), (uintptr_t)p->scope) << endl;
     // edge to parent node
     if (p->pprod) {
-        _os << format("'{}' -> '{}'", this->id(p->pprod), this->id(p)) << endl;
+        _os << format("\"{}\" -> \"{}\"", this->id(p->pprod), this->id(p)) << endl;
     }
 }
 

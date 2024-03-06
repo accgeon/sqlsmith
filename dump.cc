@@ -99,7 +99,7 @@ void graph_dumper::print(struct prod* p)
     // scope node
     if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
         visited_scopes.insert(p->scope); // insert it
-        _os << format("\"{:#018x}\" [label=\"scope:\\n{:#018x}\" shape=note]", (uintptr_t)p->scope, (uintptr_t)p->scope) << endl; // scope node
+        _os << format("\"{0:#018x}\" [label=\"scope:\\n{0:#018x}\" shape=note]", (uintptr_t)p->scope) << endl; // scope node
     }
     // edge to scope node: composition
     _os << format("\"{}\":scope -> \"{:#018x}\" [arrowtail=odiamond, dir=back]", this->id(p), (uintptr_t)p->scope) << endl;

@@ -1,4 +1,7 @@
+#include <chrono>
+#include <ctime>
 #include <format>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -57,22 +60,38 @@ graphml_dumper::~graphml_dumper()
   o << "</graph></graphml>" << endl;
 }
 
+////////////////////////////////////////
+// Visitor to dump AST as graphviz
+//
 
-std::string graph_dumper::id(struct prod* p)
+void Subgraph::head() {
+    ss << format("  subgraph \"cluster_{}\" {{", this->id) << endl;
+    ss << format("    label=\"{}\"", this->label) << endl;
+    ss <<        "    labeljust=\"l\"" << endl;
+    ss <<        "    rank=source" << endl;
+    ss <<        "    color=\"/blues9/4\"" << endl;
+    ss <<        "    style=\"filled\" fillcolor=\"/blues9/1\"" << endl;
+
+}
+
+string graph_dumper::id(struct prod* p)
 {
-  ostringstream os;
-  os << this->type(p) << "_" << internal << setw(16+2) << setfill('0') << p;
-  return os.str();
+  return format("{}_{:#018x}", this->type(p), (uintptr_t)p);
+}
+
+inline
+void graph_dumper::visit(struct prod *p) {
+    this->print(p);
 }
 
 void graph_dumper::head() {
-    _os << "digraph ast {" << std::endl;
+    _os <<        "digraph ast {" << std::endl;
     _os << format("  label=\"{} AST\"", PACKAGE_NAME) << endl;
-    _os << "  labelloc=\"t\"" << std::endl;
-    _os << "  fontname=\"Noto Sans Mono\" fontsize=16" << std::endl;
-    _os << "  colorscheme=\"ylorrd9\"" << std::endl;
-    _os << "  node [fontname=\"Menlo\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
-    _os << "  edge [color=\"/blues9/8\"]" << std::endl;
+    _os <<        "  labelloc=\"t\"" << std::endl;
+    _os <<        "  fontname=\"Noto Sans Mono\" fontsize=16" << std::endl;
+    _os <<        "  colorscheme=\"ylorrd9\"" << std::endl;
+    _os <<        "  node [fontname=\"Noto Sans Mono\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
+    _os <<        "  edge [color=\"/blues9/8\"]" << std::endl;
 }
 
 void graph_dumper::print(struct prod* p)
@@ -92,33 +111,61 @@ void graph_dumper::print(struct prod* p)
     else if (prodClassName == "bool_expr") { // p is subclass of bool_expr
         nodeColor = "/blgr9/3";
     }
-    _os << format(
+
+    ostream* pos = &_os;
+    // scope node
+    auto scopeId = format("{:#018x}", (uintptr_t)p->scope);
+    if (p->scope) {
+        Subgraph* subgraph = _visitedScopes[scopeId];
+        if (!subgraph) { // if there's no scope in _visitedScopes inserted previously
+            subgraph = new Subgraph(scopeId, p->scope, "scope: "+scopeId, "/blues9/4", "blues9/1");
+            subgraph->head();
+            _visitedScopes[scopeId] = subgraph; // insert it
+        }
+        else {
+            subgraph = _visitedScopes[scopeId];
+        }
+        pos = &subgraph->ss;
+        (*pos) << format("\"{0:#018x}\" [label=\"scope:\\n{0:#018x}\" shape=note]", (uintptr_t)p->scope) << endl; // scope node
+    }
+    (*pos) << format(
         "\"{}\" [label=\"{{{}|<scope>scope: {:#018x}|retries: {}}}\" {}]",
         this->id(p), this->type(p), (uintptr_t)p->scope, p->retries,
         (nodeColor.empty() ? "" : "fillcolor=\""+nodeColor+"\"")) << endl;
-    // scope node
-    if (p->scope && visited_scopes.count(p->scope) == 0) { // if there's no scope in visited_scopes inserted previously
-        visited_scopes.insert(p->scope); // insert it
-        _os << format("\"{0:#018x}\" [label=\"scope:\\n{0:#018x}\" shape=note]", (uintptr_t)p->scope) << endl; // scope node
-    }
-    // edge to scope node: composition
-    _os << format("\"{}\":scope -> \"{:#018x}\" [arrowtail=odiamond, dir=back]", this->id(p), (uintptr_t)p->scope) << endl;
+
     // edge to parent node
     if (p->pprod) {
-        _os << format("\"{}\" -> \"{}\"", this->id(p->pprod), this->id(p)) << endl;
+        (*pos) << format("\"{}\" -> \"{}\"", this->id(p->pprod), this->id(p)) << endl;
     }
 }
 
+void graph_dumper::tail() {
+    // close subgraph clusters
+    for (auto& [id, subgraph] : _visitedScopes) {
+        subgraph->tail();
+        _os << subgraph->ss.str() << endl;
+    }
+    _os << "}" << endl;
+}
 
+////////////////////////////////////////
+// dump AST for the query
+//
 void ast_logger::generated(prod &query)
 {
-    ostringstream ss;
-    ss << "ast-" << put_time(localtime(&now), "%Y%m%d%H%M%S") << "-" << queries << ".dot" << flush;
+    tm* t = localtime(&start_time);
+    string filename = "ast-"s +
+        format("{}{:02}{:02}{:02}{:02}{:02}",
+            1900+t->tm_year, t->tm_mon+1, t->tm_mday,
+            t->tm_hour, t->tm_min, t->tm_sec) + "-" + to_string(queries) + ".dot";
 
-    ofstream os(ss.str());
-    graph_dumper visitor(os);
-    visitor.head();
-    query.accept(&visitor);
-    visitor.tail();
+    ostringstream ss;
+    graph_dumper* pvisitor = new graph_dumper(ss);
+    pvisitor->head();
+    query.accept(pvisitor);
+    pvisitor->tail();
     queries++;
+
+    ofstream os(filename);
+    os << ss.str() << flush;
 }

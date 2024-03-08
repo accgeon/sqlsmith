@@ -4,8 +4,12 @@
 #ifndef EXPR_HH
 #define EXPR_HH
 
-#include "prod.hh"
 #include <string>
+
+#include "prod.hh"
+#include "relmodel.hh"
+#include "schema.hh"
+#include "random.hh"
 
 using std::shared_ptr;
 using std::vector;

@@ -9,10 +9,10 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 
 #pragma region custom headers
 #include "config.h"
+#include "expr.hh"
 #include "dump.hh"
 #include "util.hh"
 #pragma endregion
@@ -71,6 +71,7 @@ graphml_dumper::~graphml_dumper()
 void Subgraph::head() {
     ss << format("  subgraph \"cluster_{}\" {{", this->id) << endl;
     ss << format("    label=\"{}\"", this->label) << endl;
+    ss <<        "    fontname=\"Monaco\" fontsize=12" << endl;
     ss <<        "    labeljust=\"l\" rank=source" << endl;
     ss <<        "    color=\"/blues9/4\"" << endl;
     ss <<        "    style=\"filled\" fillcolor=\"/blues9/1\"" << endl;
@@ -91,7 +92,7 @@ void graph_dumper::head() {
     _os <<        "digraph ast {" << std::endl;
     _os << format("  label=\"{} AST\"", PACKAGE_NAME) << endl;
     _os <<        "  labelloc=\"t\"" << std::endl;
-    _os <<        "  fontname=\"Noto Sans Mono\" fontsize=16" << std::endl;
+    _os <<        "  fontname=\"Noto Sans Mono\" fontsize=20" << std::endl;
     _os <<        "  colorscheme=\"ylorrd9\"" << std::endl;
     _os <<        "  node [fontname=\"Noto Sans Mono\" fontsize=10 shape=record style=filled fillcolor=\"/oranges9/1\"]" << std::endl;
     _os <<        "  edge [color=\"/blues9/8\"]" << std::endl;
@@ -111,8 +112,8 @@ void graph_dumper::print(struct prod* p)
     else if (prodClassName == "select_list") {
         nodeColor = "/orrd9/3";
     }
-    else if (prodClassName == "bool_expr") { // p is subclass of bool_expr
-        nodeColor = "/blgr9/3";
+    else if (dynamic_cast<bool_expr*>(p)) { // p is subclass of bool_expr
+        nodeColor = "/gnbu9/3";
     }
 
     ostream* pos = &_os;

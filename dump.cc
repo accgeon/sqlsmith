@@ -1,3 +1,7 @@
+// -*- C++ -*-
+/// @file
+/// @brief Dump syntax trees as GraphViz dot (and/or GraphML)
+
 #include <chrono>
 #include <ctime>
 #include <format>
@@ -67,8 +71,7 @@ graphml_dumper::~graphml_dumper()
 void Subgraph::head() {
     ss << format("  subgraph \"cluster_{}\" {{", this->id) << endl;
     ss << format("    label=\"{}\"", this->label) << endl;
-    ss <<        "    labeljust=\"l\"" << endl;
-    ss <<        "    rank=source" << endl;
+    ss <<        "    labeljust=\"l\" rank=source" << endl;
     ss <<        "    color=\"/blues9/4\"" << endl;
     ss <<        "    style=\"filled\" fillcolor=\"/blues9/1\"" << endl;
 
@@ -114,28 +117,28 @@ void graph_dumper::print(struct prod* p)
 
     ostream* pos = &_os;
     // scope node
-    auto scopeId = format("{:#018x}", (uintptr_t)p->scope);
+    auto scopeId = Subgraph::makeId(p->scope);
+    Subgraph* subgraph = nullptr;
     if (p->scope) {
-        Subgraph* subgraph = _visitedScopes[scopeId];
+        subgraph = _visitedScopes[scopeId];
         if (!subgraph) { // if there's no scope in _visitedScopes inserted previously
-            subgraph = new Subgraph(scopeId, p->scope, "scope: "+scopeId, "/blues9/4", "blues9/1");
+            // start subgraph block
+            subgraph = new Subgraph(p->scope);
+            _visitedScopes[subgraph->id] = subgraph; // insert it
             subgraph->head();
-            _visitedScopes[scopeId] = subgraph; // insert it
+            subgraph->ss << format(
+            "    \"{0:#018x}\" [label=\"scope:\\n{0:#018x}\" shape=note fillcolor=\"/ylorbr9/2\"]\n", (uintptr_t)p->scope) << endl; // scope node
         }
-        else {
-            subgraph = _visitedScopes[scopeId];
-        }
-        pos = &subgraph->ss;
-        (*pos) << format("\"{0:#018x}\" [label=\"scope:\\n{0:#018x}\" shape=note]", (uintptr_t)p->scope) << endl; // scope node
+        pos = &(subgraph->ss);
     }
     (*pos) << format(
-        "\"{}\" [label=\"{{{}|<scope>scope: {:#018x}|retries: {}}}\" {}]",
-        this->id(p), this->type(p), (uintptr_t)p->scope, p->retries,
-        (nodeColor.empty() ? "" : "fillcolor=\""+nodeColor+"\"")) << endl;
+            "    \"{}\" [label=\"{{{}|<scope>scope: {}|retries: {}}}\" {}]",
+            this->id(p), this->type(p), subgraph->id, p->retries,
+            (nodeColor.empty() ? "" : "fillcolor=\""+nodeColor+"\"")) << endl;
 
     // edge to parent node
     if (p->pprod) {
-        (*pos) << format("\"{}\" -> \"{}\"", this->id(p->pprod), this->id(p)) << endl;
+        (*pos) << format("    \"{}\" -> \"{}\"", this->id(p->pprod), this->id(p)) << endl;
     }
 }
 
@@ -145,6 +148,7 @@ void graph_dumper::tail() {
         subgraph->tail();
         _os << subgraph->ss.str() << endl;
     }
+    // close main graph
     _os << "}" << endl;
 }
 
@@ -153,12 +157,7 @@ void graph_dumper::tail() {
 //
 void ast_logger::generated(prod &query)
 {
-    tm* t = localtime(&start_time);
-    string filename = "ast-"s +
-        format("{}{:02}{:02}{:02}{:02}{:02}",
-            1900+t->tm_year, t->tm_mon+1, t->tm_mday,
-            t->tm_hour, t->tm_min, t->tm_sec) + "-" + to_string(queries) + ".dot";
-
+    string filename = makeFilename();
     ostringstream ss;
     graph_dumper* pvisitor = new graph_dumper(ss);
     pvisitor->head();

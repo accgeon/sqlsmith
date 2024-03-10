@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 3.14)
-project(SQLsmith LANGUAGES CXX)
+project(SQLsmith
+    VERSION 1.4.1
+    DESCRIPTION "Random SQL generator by seltenreich@gmx.de"
+    HOMEPAGE_URL "https://github.com/anse1/sqlsmith/"
+    LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+
+set(CMAKE_CXX_STANDARD 20)
+set(HAVE_CXX20 TRUE)
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 include(FeatureTests)
@@ -9,16 +17,18 @@ include(FeatureTests)
 Option(USE_UPSTREAM_LIBPQXX "Fetch and use libpqxx from Github.")
 
 
+string(TOLOWER ${PROJECT_NAME} PACKAGE)
+set(PACKAGE_NAME ${PROJECT_NAME})
 
 # define our executable early, so we can set the properties, based on our dependencies
-add_executable(sqlsmith)
-target_sources(sqlsmith PRIVATE
+add_executable(${PACKAGE})
+target_sources(${PACKAGE} PRIVATE
         relmodel.cc schema.cc random.cc prod.cc expr.cc grammar.cc log.cc dump.cc impedance.cc sqlsmith.cc postgres.cc)
 
-target_link_libraries(sqlsmith PostgreSQL::PostgreSQL)
+target_link_libraries(${PACKAGE} PostgreSQL::PostgreSQL)
 
 # Workaround for outdated cmake packages on debian
-set(PostgreSQL_ADDITIONAL_VERSIONS 11 12 13 14)
+set(PostgreSQL_ADDITIONAL_VERSIONS 11 12 13 14 15 16)
 find_package(PostgreSQL REQUIRED)
 
 if (NOT USE_UPSTREAM_LIBPQXX)
@@ -30,7 +40,7 @@ if (NOT USE_UPSTREAM_LIBPQXX)
         set(HAVE_LIBPQXX7 TRUE)
     endif (PQXX_VERSION GREATER 7.0)
 
-    target_link_libraries(sqlsmith PQXX::PQXX)
+    target_link_libraries(${PACKAGE} PQXX::PQXX)
 else (NOT USE_UPSTREAM_LIBPQXX)
     set(SKIP_BUILD_TEST TRUE)
     include(FetchContent)
@@ -45,8 +55,8 @@ else (NOT USE_UPSTREAM_LIBPQXX)
 
     set(HAVE_LIBPQXX7 TRUE)
 
-    target_include_directories(sqlsmith PRIVATE ${libpqxx_SOURCE_DIR}/include)
-    target_link_libraries(sqlsmith pqxx)
+    target_include_directories(${PACKAGE} PRIVATE ${libpqxx_SOURCE_DIR}/include)
+    target_link_libraries(${PACKAGE} pqxx)
 endif (NOT USE_UPSTREAM_LIBPQXX)
 
 if(NOT std_regex_ok)
@@ -61,22 +71,22 @@ endif(NOT std_regex_ok)
 find_package(SQLite3)
 if (SQLite3_FOUND)
     set(HAVE_LIBSQLITE3 TRUE)
-    target_sources(sqlsmith PRIVATE sqlite.cc)
-    target_link_libraries(sqlsmith SQLite::SQLite3)
+    target_sources(${PACKAGE} PRIVATE sqlite.cc)
+    target_link_libraries(${PACKAGE} SQLite::SQLite3)
 endif ()
 
 # monetdb
 find_package(MonetDB)
 if (MonetDB_FOUND)
     set(HAVE_MONETDB 1)
-    target_sources(sqlsmith PRIVATE monetdb.cc)
-    target_link_libraries(sqlsmith MonetDB::mapi)
+    target_sources(${PACKAGE} PRIVATE monetdb.cc)
+    target_link_libraries(${PACKAGE} MonetDB::mapi)
 endif ()
 
 
 ## target configuration
-string(TOLOWER ${PROJECT_NAME} PACKAGE)
-set(PACKAGE_NAME ${PROJECT_NAME})
+# string(TOLOWER ${PROJECT_NAME} PACKAGE)
+# set(PACKAGE_NAME ${PROJECT_NAME})
 configure_file(config_h.cmake.in config.h)
 
 
@@ -93,4 +103,4 @@ execute_process(
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gitrev.h "#define GITREV \"${GIT_TAG}\"")
 
 # make sure our target finds gitrev.h and config.h
-target_include_directories(sqlsmith PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(${PACKAGE} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

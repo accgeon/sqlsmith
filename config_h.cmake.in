@@ -1,16 +1,49 @@
 /* we know these paramters as they are required during the CMake configure phase */
-#define HAVE_CXX17 1
 
+/* define if the compiler supports basic C++11 syntax */
+#cmakedefine HAVE_CXX11 1
 
+/* define if the compiler supports basic C++14 syntax */
+#cmakedefine HAVE_CXX14 1
 
+/* define if the compiler supports basic C++17 syntax */
+#cmakedefine HAVE_CXX17 1
+
+/* define if the compiler supports basic C++20 syntax */
+#cmakedefine HAVE_CXX20 1
+
+/* define if the Boost library is available */
 #cmakedefine HAVE_BOOST 1
+/* define if the Boost::Regex library is available */
 #cmakedefine HAVE_BOOST_REGEX 1
 
+/* define if libpqxx >= 7 is used */
 #cmakedefine HAVE_LIBPQXX7 1
-
+/* Define to 1 if you have the 'sqlite3' library (-lsqlite3). */
 #cmakedefine HAVE_LIBSQLITE3 1
+/* define if the MonetDB client library is available */
 #cmakedefine HAVE_MONETDB 1
 
-#cmakedefine PACKAGE "@PACKAGE@"
-#cmakedefine PACKAGE_NAME "@PACKAGE_NAME@"
+/* Define to 1 if PostgreSQL libraries are available */
+#cmakedefine HAVE_POSTGRESQL 1
 
+
+/* Name of package */
+#cmakedefine PACKAGE "@PACKAGE@"
+/* Define to the address where bug reports for this package should be sent. */
+#cmakedefine PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+/* Define to the full name of this package. */
+#cmakedefine PACKAGE_NAME "@PACKAGE_NAME@"
+/* Define to the full name and version of this package. */
+#cmakedefine PACKAGE_STRING "@PACKAGE_STRING@"
+/* Define to the description of this package. */
+#cmakedefine PROJECT_DESCRIPTION "@PROJECT_DESCRIPTION@"
+/* Define to the one symbol short name of this package. */
+#cmakedefine PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+/* Define to the home page for this package. */
+#cmakedefine PROJECT_HOMEPAGE_URL "@PROJECT_HOMEPAGE_URL@"
+/* Define to the version of this package. */
+#cmakedefine PROJECT_VERSION "@PROJECT_VERSION@"
+
+/* Version number of package */
+#cmakedefine VERSION "@VERSION@"

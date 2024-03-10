@@ -1,4 +1,4 @@
-AC_INIT(SQLsmith, 1.4, seltenreich@gmx.de, sqlsmith, https://github.com/anse1/sqlsmith/)
+AC_INIT(SQLsmith, 1.4.1, seltenreich@gmx.de, sqlsmith, https://github.com/anse1/sqlsmith/)
 AC_LANG(C++)
 
 AC_SUBST(CC, [clang])

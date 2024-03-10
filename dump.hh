@@ -90,14 +90,17 @@ struct ast_logger : logger {
     std::chrono::system_clock::time_point now;
     std::time_t start_time;
     int queries = 0;
+    std::string outDir;
 
-    ast_logger()
+    ast_logger(std::string outDir = "")
           : now(std::chrono::system_clock::now()), 
-            start_time(std::chrono::system_clock::to_time_t(now)) {}
+            start_time(std::chrono::system_clock::to_time_t(now)),
+            outDir(outDir) {}
     virtual void generated(prod &query);
     std::string makeFilename() {
         tm *t = localtime(&start_time);
-        return format("ast-{}{:02}{:02}{:02}{:02}{:02}-{}.dot",
+        return format("{}ast-{}{:02}{:02}{:02}{:02}{:02}-{}.dot",
+                outDir.empty() ? "" : outDir+"/",
                 1900 + t->tm_year, t->tm_mon + 1, t->tm_mday,
                 t->tm_hour, t->tm_min, t->tm_sec, queries);
     }

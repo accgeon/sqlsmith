@@ -87,11 +87,11 @@ int main(int argc, char *argv[])
       "    --log-to=connstr     log errors to postgres database" << endl <<
       "    --seed=int           seed RNG with specified int instead of PID" << endl <<
       "    --dump-all-queries   print queries as they are generated" << endl <<
-      "    --dump-all-graphs    dump generated ASTs" << endl <<
+      "    --dump-all-graphs[=outDir]    dump generated ASTs" << endl <<
       "    --dry-run            print queries instead of executing them" << endl <<
       "    --exclude-catalog    don't generate queries using catalog relations" << endl <<
       "    --max-queries=long   terminate after generating this many queries" << endl <<
-      "    --rng-state=string    deserialize dumped rng state" << endl <<
+      "    --rng-state=string   deserialize dumped rng state" << endl <<
       "    --verbose            emit progress output" << endl <<
       "    --version            print version information and exit" << endl <<
       "    --help               print available command line options and exit" << endl;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
       }
       
       if (options.count("dump-all-graphs"))
-	loggers.push_back(make_shared<ast_logger>());
+	loggers.push_back(make_shared<ast_logger>(options["dump-all-graphs"]));
 
       if (options.count("dump-all-queries"))
 	loggers.push_back(make_shared<query_dumper>());
